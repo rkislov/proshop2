@@ -33,7 +33,7 @@ class UserSerializerWithToken(UserSerializer):
         fields = fields = ['id', '_id', 'username', 'email', 'name', 'isAdmin', 'token']
     def get_token(self, obj):
         token = RefreshToken.for_user(obj)
-        return str(token)
+        return str(token.access_token)
 
 class ProductSerializer(serializers.ModelSerializer):
     
