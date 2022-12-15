@@ -82,7 +82,7 @@ function RegisterScreen() {
 
         <Form.Group controlId='password'>
             <Form.Label>
-                пароль
+                Пароль
             </Form.Label>
             <Form.Control
                 required
@@ -94,7 +94,7 @@ function RegisterScreen() {
         </Form.Group>
         <Form.Group controlId='confirmPassword'>
             <Form.Label>
-                подтвердите пароль
+                Подтвердите пароль
             </Form.Label>
             <Form.Control
                 required

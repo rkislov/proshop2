@@ -9,6 +9,7 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ProductScreen from './screens/ProductScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ShippingScreen from './screens/ShippingScreen';
 
 import { Fragment } from 'react';
 
@@ -28,6 +29,7 @@ function App() {
               <Route path='/login/' element={<LoginScreen />} exact />
               <Route path='/register/' element={<RegisterScreen />} exact />
               <Route path='/profile/' element={<ProfileScreen />} exact />
+              <Route path='/shipping/' element={<ShippingScreen />} exact />
             </Routes>
             </main>
           </Container>

@@ -103,7 +103,7 @@ function ProfileScreen() {
 
         <Form.Group controlId='password'>
             <Form.Label>
-                пароль
+                Пароль
             </Form.Label>
             <Form.Control
                 type='password'
@@ -114,7 +114,7 @@ function ProfileScreen() {
         </Form.Group>
         <Form.Group controlId='confirmPassword'>
             <Form.Label>
-                подтвердите пароль
+                Подтвердите пароль
             </Form.Label>
             <Form.Control
                 type='password'
