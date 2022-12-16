@@ -1,7 +1,7 @@
 import React from 'react'
 import { Navbar, Container, Nav, NavDropdown } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link, NavLink} from 'react-router-dom'
+import { NavLink} from 'react-router-dom'
 import { logout } from '../actions/userActions'
 
 
