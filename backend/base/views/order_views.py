@@ -9,7 +9,7 @@ from base.serializers import ProductSerializer, OrderSerializer
 from rest_framework import status
 
 @api_view(['POST'])
-@permission_classes(['IsAuthenticated'])
+@permission_classes([IsAuthenticated])
 def addOrderItems(request):
     user = request.user
     data = request.data
@@ -33,14 +33,14 @@ def addOrderItems(request):
             postalCode = data['shippingAddress']['postalcode'],
             country = data['shippingAddress']['country'],
         )
-
+        
         for i in orderItems:
             product = Product.objects.get(_id=i['product'])
-
+            print(product._id)
             item = OrderItem.objects.create(
                 product = product,
                 order=order,
-                name = product['name'],
+                name = product.name,
                 qty= i['qty'],
                 price = i['price'],
                 image = product.image.url,
@@ -48,5 +48,24 @@ def addOrderItems(request):
             product.countInStock -= item.qty
             product.save()
 
-    serializer = OrderSerializer(order, many=True)
-    return Response(serializer.data)
+        serializer = OrderSerializer(order, many=False)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getOrderById(request, pk):
+    
+    user = request.user
+    
+    try:
+        order = Order.objects.get(_id=pk)
+        
+        if user.is_staff or order.user == user:
+            serializer = OrderSerializer(order, many=False)
+            
+            return Response(serializer.data)
+        else:
+            Response({'detail':'Не разрешен просмотр данного заказа'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+        return Response({'detail':'Такого заказа не существует'}, status=status.HTTP_400_BAD_REQUEST)

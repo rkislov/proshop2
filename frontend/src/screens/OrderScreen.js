@@ -1,79 +1,82 @@
 import React, {useState, useEffect} from 'react'
-import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { Button, Col, ListGroup, Image, Card, Row} from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import CheckoutSteps from '../components/CheckoutSteps'
+import Loader from '../components/Loader'
 import Message from '../components/Message'
-import { createOrder } from '../actions/orderActions'
-import { ORDER_CREATE_RESET } from '../constants/orderConstants'
+import { getOrderDetails } from '../actions/orderActions'
 
-function PlaceOrderScreen() {
 
-    const orderCreate = useSelector(state => state.orderCreate)
-    const {order,error,success} = orderCreate
+function OrderScreen() {
+
+    const params = useParams()
+    const orderId = params.id
+    
+    const orderDetails = useSelector(state => state.orderDetails)
+    const {order,error, loading} = orderDetails
 
     const dispatch = useDispatch()
-    const history = useNavigate()
-    const cart = useSelector(state => state.cart)
+    
+    
 
-    cart.itemPrice = cart.cartItems.reduce((acc, item) => acc + item.price*item.qty, 0).toFixed(2)
-    cart.shippingPrice = (cart.itemPrice > 100 ? 0 : 10).toFixed(2)
-    cart.taxPrice = Number((0.082) * cart.itemPrice).toFixed(2)
-    cart.totalPrice = (Number(cart.itemPrice) + Number(cart.shippingPrice) + Number(cart.taxPrice)).toFixed(2)
-
-    if(!cart.paymentMethod) {
-        history('/payment')
+    if(!loading && !error) {
+        order.itemPrice = order.orderItems.reduce((acc, item) => acc + item.price*item.qty, 0).toFixed(2)
     }
+    
+
     useEffect(() => {
-        if(success){
-            history(`/order/${order._id}`)
-            dispatch({
-                type: ORDER_CREATE_RESET
-            })
+        if(!order || order._id === Number(orderId)){
+            dispatch(getOrderDetails(orderId))
         }
+       
+    },[dispatch, order, orderId])
 
-    },[history, success])
 
-    const placeOrder = () => {
-        dispatch(createOrder({
-            orderItems: cart.cartItems,
-            shippingAddress: cart.shippingAddress,
-            paymentMethod: cart.paymentMethod,
-            itemsPrice: cart.itemPrice,
-            shippingPrice: cart.shippingPrice,
-            taxPrice: cart.taxPrice,
-            totalPrice: cart.totalPrice,
 
-        }))
-    }
-
-  return (
+  return loading ? (
+    <Loader />
+  ) : error ? (
+    <Message variant='danger'>{error}</Message>
+  ): (
     <div>
-      <CheckoutSteps step1 step2 step3 step4/>
+     <h1>Заказ: {order._id}</h1>
       <Row>
             <Col md={8}>
                 <ListGroup variant='flush'>
                     <ListGroup.Item>
                         <h2>Доставка</h2>
+                        <p><starong>Имя: </starong> {order.user.name}</p>
+                        <p><starong>Email: </starong><a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
+                        
                         <p>
                            <strong>Доставка: </strong>
-                           {cart.shippingAddress.postalcode} {cart.shippingAddress.country} {cart.shippingAddress.city} {cart.shippingAddress.address}
+                           {order.shippingAddress.postalcode} {order.shippingAddress.country} {order.shippingAddress.city} {order.shippingAddress.address}
                         </p>
+                        {order.isDelivered ? (
+                            <Message variant='success'>Доставлен {order.deleveredAt}</Message>
+                        ) : (
+                            <Message variant='warning'>Не доставлен</Message>
+                        )}
                     </ListGroup.Item>
                     <ListGroup.Item>
                         <h2>Оплата</h2>
                         <p>
                            <strong>Способ: </strong>
-                           {cart.paymentMethod} 
+                           {order.paymentMethod} 
                         </p>
+                        {order.isPaid ? (
+                            <Message variant='success'>Оплачен {order.paidAt}</Message>
+                        ) : (
+                            <Message variant='warning'>Не оплачен</Message>
+                        )}
                     </ListGroup.Item>
                     <ListGroup.Item>
                         <h2>Заказ</h2>
-                        {cart.cartItems.lenngth === 0 ? (<Message variant='info'>
-                            У вас пока нет заказов
+                        {order.orderItems.lenngth === 0 ? (<Message variant='info'>
+                            Заказ отсутсвует
                         </Message>) : (
                             <ListGroup variant='flush'>
-                                {cart.cartItems.map((item, index) =>(
+                                {order.orderItems.map((item, index) =>(
                                     <ListGroup.Item key={index}>
                                         <Row>
                                             <Col md={1}>
@@ -105,7 +108,7 @@ function PlaceOrderScreen() {
                                     Товаров:
                                 </Col>
                                 <Col>
-                                    ${cart.itemPrice}
+                                    ${order.itemPrice}
                                 </Col> 
                             </Row>
                         </ListGroup.Item>
@@ -115,7 +118,7 @@ function PlaceOrderScreen() {
                                     Доставка:
                                 </Col>
                                 <Col>
-                                    ${cart.shippingPrice}
+                                    ${order.shippingPrice}
                                 </Col> 
                             </Row>
                         </ListGroup.Item>
@@ -125,7 +128,7 @@ function PlaceOrderScreen() {
                                     Налоги:
                                 </Col>
                                 <Col>
-                                    ${cart.taxPrice}
+                                    ${order.taxPrice}
                                 </Col> 
                             </Row>
                         </ListGroup.Item>
@@ -135,26 +138,14 @@ function PlaceOrderScreen() {
                                     Итоговая стоимость:
                                 </Col>
                                 <Col>
-                                    ${cart.totalPrice}
+                                    ${order.totalPrice}
                                 </Col> 
                             </Row>
                         </ListGroup.Item>
                         <ListGroup.Item>
                             {error && <Message variant='danger'>{error}</Message>}
                         </ListGroup.Item>
-                        <ListGroup.Item>
-                            <Row>
-                                <Button
-                                type='button'
-                                className='btn-block'
-                                disabled={cart.cartItems === 0}
-                                onClick={placeOrder}
-
-                                >
-                                    Купить
-                                </Button>
-                            </Row>
-                        </ListGroup.Item>
+                       
 
                     </ListGroup>
                 </Card>
@@ -164,4 +155,4 @@ function PlaceOrderScreen() {
   )
 }
 
-export default PlaceOrderScreen
+export default OrderScreen
