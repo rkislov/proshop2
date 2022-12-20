@@ -4,7 +4,9 @@ import { Button, Col, ListGroup, Image, Card, Row} from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import Loader from '../components/Loader'
 import Message from '../components/Message'
-import { getOrderDetails } from '../actions/orderActions'
+import { PayPalButton } from 'react-paypal-button-v2'
+import { getOrderDetails, payOrder } from '../actions/orderActions'
+import { ORDER_PAY_RESET} from '../constants/orderConstants'
 
 
 function OrderScreen() {
@@ -15,23 +17,47 @@ function OrderScreen() {
     const orderDetails = useSelector(state => state.orderDetails)
     const {order,error, loading} = orderDetails
 
+    const orderPay = useSelector(state => state.orderPay)
+    const {succes: successPay , loading: loadingPay} = orderPay
+
     const dispatch = useDispatch()
-    
-    
+    const [sdkReady, setSdkReady] = useState(false)
+// Ae0yCcsfA_taA0IA1u-eRWTlfSMIRJoEKFEfWGtkYS0Y5TQN2r6D2Dq-PyEvmJBGg294TbYQY4iNnC9m
 
     if(!loading && !error) {
         order.itemPrice = order.orderItems.reduce((acc, item) => acc + item.price*item.qty, 0).toFixed(2)
     }
     
 
+    const addPayPalScript = () => {
+        const script = document.createElement('script')
+        script.type = 'text/javascript'
+        script.src = 'https://www.paypal.com/sdk/js?client-id=Ae0yCcsfA_taA0IA1u-eRWTlfSMIRJoEKFEfWGtkYS0Y5TQN2r6D2Dq-PyEvmJBGg294TbYQY4iNnC9m&components=buttons'
+        script.async = true
+        script.onload = () => {
+            setSdkReady(true)
+        }
+        document.body.appendChild(script)
+        
+    }
+
     useEffect(() => {
-        if(!order || order._id === Number(orderId)){
+        if(!order || successPay || order._id === Number(orderId)){
+            dispatch({type: ORDER_PAY_RESET})
             dispatch(getOrderDetails(orderId))
+        } else if (!order.isPayd) {
+            if(!window.paypal) {
+                addPayPalScript()
+            } else {
+                setSdkReady(true)
+            }
         }
        
     },[dispatch, order, orderId])
 
-
+    const successPaymentHandler = (paymentResult) => {
+        dispatch(payOrder(orderId, paymentResult))
+    }
 
   return loading ? (
     <Loader />
@@ -45,8 +71,8 @@ function OrderScreen() {
                 <ListGroup variant='flush'>
                     <ListGroup.Item>
                         <h2>Доставка</h2>
-                        <p><starong>Имя: </starong> {order.user.name}</p>
-                        <p><starong>Email: </starong><a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
+                        <p><strong>Имя: </strong> {order.user.name}</p>
+                        <p><strong>Email: </strong><a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
                         
                         <p>
                            <strong>Доставка: </strong>
@@ -142,9 +168,22 @@ function OrderScreen() {
                                 </Col> 
                             </Row>
                         </ListGroup.Item>
-                        <ListGroup.Item>
-                            {error && <Message variant='danger'>{error}</Message>}
-                        </ListGroup.Item>
+                                
+                                {!order.isPaid && (
+                                    <ListGroup.Item>
+                                        {loadingPay && <Loader/>}
+
+                                        {!sdkReady ? (
+                                            <Loader />
+                                        ) : (
+                                            <PayPalButton 
+                                                amount={order.totalPrice}
+                                                onSuccess={successPaymentHandler}
+                                            />
+                                        )
+                                    }
+                                    </ListGroup.Item>
+                                )}
                        
 
                     </ListGroup>
